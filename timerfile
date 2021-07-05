@@ -1,0 +1,115 @@
+import org.apache.camel.CamelContext;
+import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.impl.DefaultCamelContext;
+ 
+public class CamelTimerExample {
+    public static void main(String[] args) throws Exception {
+        CamelContext camelContext = new DefaultCamelContext();
+        try {
+            camelContext.addRoutes(new RouteBuilder() {
+                @Override
+                public void configure() throws Exception {
+                    from("timer://simpleTimer?period=1000")
+                            .setBody(simple("Hello from timer at ${header.firedTime}"))
+                            .to("stream:out");
+                }
+            });
+            camelContext.start();
+            Thread.sleep(3000);
+        } finally {
+            camelContext.stop();
+        }
+    }
+}
+
+ <dependencies>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-stream</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>4.1.5.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-spring</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.26</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jdbc</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>4.1.5.RELEASE</version>
+        </dependency>
+    </dependencies>
+</project>
+TimePatternExample {
+    public static void main(String[] args) throws Exception {
+        CamelContext camelContext = new DefaultCamelContext();
+        try {
+            camelContext.addRoutes(new RouteBuilder() {
+                @Override
+                public void configure() throws Exception {
+                    Date future = new Date(new Date().getTime() + 1000);
+ 
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                    String time = sdf.format(future);
+ 
+                    fromF("timer://simpleTimer?time=%s&pattern=dd-MM-yyyy HH:mm:ss", time)
+                    .setBody(simple("Hello from timer at ${header.firedTime}"))
+                    .to("stream:out");
+                }
+            });
+            camelContext.start();
+            Thread.sleep(3000);
+        } finally {
+            camelContext.stop();
+        }
+    }
+}
+OptionsExample {
+    public static void main(String[] args) throws Exception {
+        CamelContext camelContext = new DefaultCamelContext();
+        try {
+            camelContext.addRoutes(new RouteBuilder() {
+                @Override
+                public void configure() throws Exception {                  
+                    fromF("timer://simpleTimer?delay=2s&repeatCount=2")
+                    .setBody(simple("Hello from timer at ${header.firedTime}"))
+                    .to("stream:out");
+                }
+            });
+            camelContext.start();
+            Thread.sleep(3000);
+        } finally {
+            camelContext.stop();
+        }
+    }
+}
