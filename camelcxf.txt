@@ -1,0 +1,203 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.test1</groupId>
+	<artifactId>SoapExample</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-core</artifactId>
+			<version>2.12.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-cxf</artifactId>
+			<version>2.12.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.6</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+		</dependency>
+	</dependencies>
+
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<version>2.4.0</version>
+
+			</plugin>
+
+			
+			<plugin>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-codegen-plugin</artifactId>
+
+				<executions>
+					<execution>
+						<id>generate-sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<sourceRoot>/src/main/java</sourceRoot>
+							<wsdlOptions>
+								<wsdlOption>
+									<wsdl>/src/main/resources/wsdl/test.wsdl</wsdl>
+								</wsdlOption>
+							</wsdlOptions>
+						</configuration>
+						<goals>
+							<goal>wsdl2java</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+		</plugins>
+	</build>
+
+</project>
+
+   
+
+
+
+Next we define a "contract-first" webservice using WSDL. In the contract-first web service, the "contract" i.e a WSDL definition of operations and endpoints and XML schema of the messages is created first, without actually writing any service code.
+Next we define the wsdl file that takes a String as an input and returns another string as output.
+The WSDL is defined as follows-
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:tns="http://test1.com" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	targetNamespace="http://test1.com">
+
+	<wsdl:types>
+		<xs:schema targetNamespace="http://test1.com">
+			<xs:element name="inputSOATest">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element type="xs:string" name="test" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="outputSOATest">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element type="xs:string" name="result" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:schema>
+	</wsdl:types>
+
+
+<!--Define input and output parameters -->
+	<wsdl:message name="inputSOATest">
+		<wsdl:part name="in" element="tns:inputSOATest" />
+	</wsdl:message>
+	<wsdl:message name="outputSOATest">
+		<wsdl:part name="out" element="tns:outputSOATest" />
+	</wsdl:message>
+
+<!--Define port definition -->
+	<wsdl:portType name="SOATestEndpoint">
+		<wsdl:operation name="SOATest">
+			<wsdl:input message="tns:inputSOATest" />
+			<wsdl:output message="tns:outputSOATest" />
+		</wsdl:operation>
+	</wsdl:portType>
+
+<!--Bind Soap operation and service -->
+	<wsdl:binding name="SOATestBinding" type="tns:SOATestEndpoint">
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="SOATest">
+			<soap:operation soapAction="http://test1.com"
+				style="document" />
+			<wsdl:input>
+				<soap:body parts="in" use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body parts="out" use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+
+<!--Define service -->
+	<wsdl:service name="SOATestEndpointService">
+		<wsdl:port name="SOATestEndpoint" binding="tns:SOATestBinding">
+			<soap:address location="http://localhost:8181/cxf/test1/learn" />
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
+
+
+camel15_8
+Next we define a cxfEndpoint and configure a route to expose webservice.
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camel="http://camel.apache.org/schema/spring"
+	xmlns:osgi="http://www.springframework.org/schema/osgi" xmlns:cxf="http://camel.apache.org/schema/cxf"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd       http://camel.apache.org/schema/cxf http://camel.apache.org/schema/cxf/camel-cxf-2.8.3.xsd">
+
+
+	//define a cxfEndpoint for the wsdl
+	<cxf:cxfEndpoint id="CXFTest" address="/test1/learn"
+		endpointName="a:SOATestEndpoint" serviceName="a:SOATestEndpointService"
+		wsdlURL="META-INF/wsdl/test.wsdl" serviceClass="com.test1.SOATestEndpoint"
+		xmlns:a="http://test1.com" />
+
+	<bean id="processor" class="com.test1.beans.CamelProcessor" />
+	//camel route for processing the input
+	<camelContext id="camelId" xmlns="http://camel.apache.org/schema/spring">
+
+		<camel:route id="bookTicket">
+			<camel:from uri="cxf:bean:CXFTest" />
+			<process ref="processor" />
+		</camel:route>
+
+	</camelContext>
+</beans>
+package com.test1.beans;
+
+import java.util.List;
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import com.test1.InputSOATest;
+import com.test1.OutputSOATest;
+
+public class CamelProcessor implements Processor {
+
+    public void process(Exchange exchange) throws Exception {
+    	
+        OutputSOATest out = new OutputSOATest();
+        
+        //Get input from exchange
+        List soaList = exchange.getIn().getBody(List.class);
+        InputSOATest inputSOATest = (InputSOATest) soaList.get(0);
+        out.setResult("Welcome " + inputSOATest.getTest().toString());
+        //set output in exchange
+        exchange.getOut().setBody(out);
+    }
+
+}
